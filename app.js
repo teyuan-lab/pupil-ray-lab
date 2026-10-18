@@ -1,6 +1,6 @@
 'use strict';
 const $=id=>document.getElementById(id),O=Optics;
-const specs=[['f','Objective nominal f',90,240,1,' mm'],['eye','Ocular focal parameter',20,65,1,' mm'],['diam','Diaphragm diameter',8,30,.5,' mm'],['field','Object field angle',0,3,.1,'°'],['defocus','Ocular defocus',-12,12,.5,' mm'],['stop','Diaphragm position',0,90,1,' %'],['n','Glass refractive index',1.45,1.7,.001,''],['eyeOffset','Eye axial offset',-40,60,1,' mm'],['eyeHeight','Eye lateral offset',-8,8,.25,' mm'],['eyeDiam','Eye aperture diameter',2,8,.25,' mm']];
+const specs=[['f','Objective nominal f',90,240,1,' mm'],['eye','Ocular focal parameter',20,65,1,' mm'],['diam','Diaphragm diameter',8,30,.5,' mm'],['field','Object field angle',0,3,.1,'°'],['defocus','Ocular defocus',-12,12,.5,' mm'],['stop','Diaphragm position',-100,90,1,' mm'],['n','Glass refractive index',1.45,1.7,.001,''],['eyeOffset','Eye axial offset',-40,60,1,' mm'],['eyeHeight','Eye lateral offset',-8,8,.25,' mm'],['eyeDiam','Eye aperture diameter',2,8,.25,' mm']];
 let state={},key='kepler';
 const fmt=(v,d=1)=>Number.isFinite(v)?v.toFixed(d):'∞';
 function reset(){state={...O.presets[key],n:1.517,defocus:0,stop:0,eyeOffset:0,eyeHeight:0,eyeDiam:4};$('controls').innerHTML=specs.map(([id,label,min,max,step,unit])=>`<div class="control"><label for="${id}">${label}<output id="${id}Value"></output></label><input type="range" aria-label="${label}" id="${id}" min="${min}" max="${max}" step="${step}" value="${state[id]}"></div>`).join('');for(const [id]of specs)$(id).addEventListener('input',()=>{state[id]=+$(id).value;render();});render();}
@@ -8,6 +8,7 @@ $('system').onchange=()=>{key=$('system').value;reset();};$('reset').onclick=res
 function render(){
  for(const [id,,, ,step,unit]of specs)$(id+'Value').textContent=fmt(state[id],step<.01?3:step<1?2:0)+unit;
  const sys=O.system(key,state),a=O.analyze(sys),en=a.entrance,ex=a.exit;
+ $('stopValue').textContent=fmt(sys.diaphragm.x)+' mm'; $('stop').setAttribute('aria-valuetext',fmt(sys.diaphragm.x)+' mm from objective front');
  $('description').textContent=O.presets[key].description;
  $('epD').textContent=en?fmt(en.diam)+' mm':'Unavailable';$('epX').textContent=en?`x = ${fmt(en.x)} mm · ${en.virtual?'virtual':'real / stop'}`:'';
  $('xpD').textContent=ex?fmt(ex.diam,2)+' mm':'Unavailable';$('xpX').textContent=ex?`x = ${fmt(ex.x)} mm · ${ex.virtual?'virtual':'real'}`:'';
@@ -21,7 +22,7 @@ function render(){
  const chiefState=chief?.ok?'Chief ray passes the stop center.':'Chief ray unavailable or clipped.';
  $('status').textContent=`${chiefState} Active stop: ${sys.stop.name}. ${17-passed.length} sampled field rays blocked. ${eyeX<sys.last?'Eye plane is inside the instrument.':`${eyePass.length}/${passed.length} emerging rays enter the eye aperture.`} ${!real?'Exit pupil is not accessible outside the instrument.':''}`;
  $('eyePosition').textContent=`x = ${fmt(eyeX)} mm`;
- let xs=[-45,sys.last+40,eyeX+15];for(const p of [en,ex])if(p&&Number.isFinite(p.x)&&Math.abs(p.x)<sys.last*3+200)xs.push(p.x);
+ let xs=[Math.min(0,sys.diaphragm.x)-Math.max(35,sys.p.f*.2),sys.last+40,eyeX+15];for(const p of [en,ex])if(p&&Number.isFinite(p.x)&&Math.abs(p.x)<sys.last*3+200)xs.push(p.x);
  const xmin=Math.min(...xs)-15,xmax=Math.max(...xs)+15,yrange=Math.max(30,state.diam*.8,...sys.ls.map(l=>l.a+10));
  const scale=Math.min(900/(xmax-xmin),210/(yrange*2)),X=x=>50+(900-(xmax-xmin)*scale)/2+(x-xmin)*scale,Y=y=>176-y*scale;
  let s=`<defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#f0f3f7"/></pattern></defs><rect width="1000" height="350" fill="url(#grid)"/><path d="M40 176H960" stroke="#b7c4d3" stroke-dasharray="5 5"/><text x="42" y="319">x = 0 at objective front vertex · mm</text>`;

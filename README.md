@@ -8,6 +8,8 @@ Dependency-free classroom demonstration of chief rays, entrance and exit pupils,
 
 Keplerian telescope, two-element eyepiece with an upstream objective, illustrative rifle scope with a 1:1 erecting relay, and Galilean telescope. Adjust objective/ocular power parameters, diaphragm diameter and position, object field, defocus, glass index, and eye position/aperture. Presets are teaching prescriptions, not reproductions of commercial optics. The objective parameter is a nominal thin-lens value; the table provides the actual thick spherical prescription. The ocular parameter specifies the approximate singlet focal length (or the scale of the two-element ocular).
 
+The diaphragm position control now extends in front of the entire system, up to one nominal objective focal length before the first lens. Its readout is the actual x coordinate in mm; negative x is in object space. Positive travel places it in the first air gap. Ray launch positions and layout bounds follow the diaphragm.
+
 ## Physics
 
 Each ray intersects spherical surface caps and refracts by vector Snell's law. Rays that miss a surface, clip an aperture or undergo total internal reflection are stopped. Chief rays are numerically aimed through the active aperture-stop center. The actual paraxial aperture stop is found by comparing on-axis collimated-ray acceptance at every clear aperture. It can switch from the adjustable diaphragm to a lens rim.

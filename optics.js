@@ -35,12 +35,12 @@ function system(key,params={}){
   const rev=trace(ss.slice().reverse(),[e2.x+e2.t+.1,1e-4],[-1,0],false);const focus=rev.p[0]-rev.p[1]*rev.d[0]/rev.d[1];let shift=image-focus+p.defocus;e1.x+=shift;e2.x+=shift;for(const l of [e1,e2]){l.surfaces.forEach(s=>s.x+=shift);ls.push(l);}
  }else{const fe=key==='galilean'?-p.eye:p.eye,e=lens(0,fe,Math.max(14,p.diam*.6),'Eyepiece',p.n);let x=image+focal(e).ffl+p.defocus;e.x=x;e.surfaces.forEach(s=>s.x+=x);ls.push(e);}
  const last=ls.at(-1).x+ls.at(-1).t;
- // The adjustable diaphragm stays in the air gap immediately behind the objective.
- const stopx=p.stop===0?-.02:obj.t+1+(ls[1].x-obj.t-2)*p.stop/100;
+ // Negative travel moves into object space; positive travel stays in the first air gap.
+ const stopx=p.stop<0?p.stop*p.f/100:p.stop===0?-.02:obj.t+1+(ls[1].x-obj.t-2)*p.stop/100;
  const diaphragm={x:stopx,r:Infinity,a:p.diam/2,n1:1,n2:1,stop:true,name:'Diaphragm'};
  const surfaces=[...ls.flatMap(l=>l.surfaces),diaphragm].sort((a,b)=>a.x-b.x);
  // Identify the actual paraxial aperture stop by the on-axis collimated-ray height at every clear aperture.
- const axial=trace(surfaces,[-1,1e-5],[1,0],false);let capacity=Infinity,stop=diaphragm;
+ const axial=trace(surfaces,[Math.min(-1,stopx-1),1e-5],[1,0],false);let capacity=Infinity,stop=diaphragm;
  if(axial.ok)surfaces.forEach((s,i)=>{const h=Math.abs(axial.points[i+1][1]/1e-5),c=h>1e-10?s.a/h:Infinity;if(c<capacity){capacity=c;stop=s;}});
  return {key,p,ls,surfaces,stop,diaphragm,last,image,capacity};
 }
@@ -53,7 +53,7 @@ function pupil(sys,side){
  return {x,diam:Math.abs(mag)*sys.stop.a*2,mag,virtual:(x-a.p[0])*dir<0};
 }
 function aim(sys,angle,target){
- const start=-Math.max(35,sys.p.f*.2),d=[Math.cos(angle),Math.sin(angle)],ss=sys.surfaces.filter(s=>s.x<=sys.stop.x);
+ const start=Math.min(0,sys.diaphragm.x)-Math.max(35,sys.p.f*.2),d=[Math.cos(angle),Math.sin(angle)],ss=sys.surfaces.filter(s=>s.x<=sys.stop.x);
  function run(h){const r=trace(ss,[start,h],d,false);return r.ok?r:null;}
  let h=target-(sys.stop.x-start)*Math.tan(angle);
  for(let i=0;i<18;i++){let r=run(h);if(!r)return null;let err=r.p[1]-target;if(Math.abs(err)<1e-8)return {h,start,d};let r2=run(h+.0001);if(!r2)return null;let derivative=(r2.p[1]-r.p[1])/.0001;if(Math.abs(derivative)<1e-9)return null;h-=err/derivative;}
