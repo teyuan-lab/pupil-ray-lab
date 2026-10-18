@@ -6,7 +6,7 @@ Dependency-free classroom demonstration of chief rays, entrance and exit pupils,
 
 ## Systems and controls
 
-Keplerian telescope, two-element eyepiece with an upstream objective, illustrative rifle scope with a 1:1 erecting relay, and Galilean telescope. Adjust objective/ocular power parameters, diaphragm diameter and position, object field, defocus, glass index, and eye position/aperture. Presets are teaching prescriptions, not reproductions of commercial optics. The ocular parameter specifies the approximate singlet focal length (or the scale of the two-element ocular).
+Keplerian telescope, two-element eyepiece with an upstream objective, illustrative rifle scope with a 1:1 erecting relay, and Galilean telescope. Adjust objective/ocular power parameters, diaphragm diameter and position, object field, defocus, glass index, and eye position/aperture. Presets are teaching prescriptions, not reproductions of commercial optics. The objective parameter is a nominal thin-lens value; the table provides the actual thick spherical prescription. The ocular parameter specifies the approximate singlet focal length (or the scale of the two-element ocular).
 
 ## Physics
 
