@@ -16,7 +16,7 @@ Each ray intersects spherical surface caps and refracts by vector Snell's law. R
 
 Entrance and exit pupils are Gaussian images of that stop, evaluated by infinitesimal ray tracing through the same surfaces in reverse and forward directions. Pupil diameter is calculated from transverse magnification. Real/virtual pupil status and signed eye relief from the final surface vertex are shown. Dashed green probe rays visualize pupil imaging; their finite-angle aberration can leave small residual errors at the paraxial pupil. Marginal field rays can vignette even when the paraxial stop calculation is valid.
 
-All prescriptions are paraxially focused by thick-element focal distances; the relay has equal object and image conjugates. The two-element ocular's front focal plane is calculated by reverse tracing. Glass index changes regenerate focal spacing; defocus shifts the final ocular only. The eye is a circular aperture represented by its meridional section, without an eye lens. The intercept panel is a meridional sample, not an irradiance image. Horizontal positions in that panel identify the sampled stop coordinate; vertical positions are ray heights at the eye plane. No diffraction, dispersion, Fresnel losses or commercial-design optimization.
+All prescriptions are paraxially focused by thick-element focal distances; the relay has equal object and image conjugates. The two-element ocular's front focal plane is calculated by reverse tracing. Glass index changes regenerate focal spacing; defocus shifts the final ocular only. The eye is a circular aperture represented by its meridional section, without an eye lens. The eye panel is a magnified meridional side view, not an irradiance image. It shows the last surface, the green exit-pupil plane and diameter, and the purple iris with an open gap. Blue ray segments enter the gap; red ones terminate at the iris. The two axes use independent scales for readability. The capture count refers to the 17 sampled rays of the selected field, not a photometric throughput fraction. An alignment button resets the eye offsets for a real external exit pupil; it is disabled for an inaccessible pupil. No diffraction, dispersion, Fresnel losses or commercial-design optimization.
 
 ## Run and verify
 
@@ -25,3 +25,5 @@ Open `index.html` directly, or run `node serve.cjs` and visit http://127.0.0.1:8
 Sources: [Ansys chief-ray definition](https://ansyshelp.ansys.com/public/Views/Secured/Zemax/v25101/en/OpticStudio_User_Guide/OpticStudio_Help/topics/Chief_Ray.html), [Edmund Optics telescope optics](https://www.edmundoptics.com/knowledge-center/application-notes/optics/telescope-optics-for-hobbyists/).
 
 Publish repository root on `main` through GitHub Pages (Deploy from a branch).
+
+The main exit-pupil marker is drawn above rays and eye markers, with a full plane guide, diameter end caps, real/virtual styling and an explicit diameter/position label.
