@@ -15,7 +15,7 @@ function fieldRay(sys,ay,az,ty,tz){
  const start=Math.min(0,sys.diaphragm.x)-Math.max(35,sys.p.f*.2),d=unit([1,Math.tan(ay),Math.tan(az)]),ss=sys.surfaces.filter(s=>s.x<=sys.stop.x);let y=ty-(sys.stop.x-start)*d[1]/d[0],z=tz-(sys.stop.x-start)*d[2]/d[0];
  for(let i=0;i<12;i++){const r=trace(ss,[start,y,z],d,false);if(!r)return null;const ey=r.p[1]-ty,ez=r.p[2]-tz;if(Math.hypot(ey,ez)<1e-7)return trace(sys.surfaces,[start,y,z],d);const h=1e-4,ry=trace(ss,[start,y+h,z],d,false),rz=trace(ss,[start,y,z+h],d,false);if(!ry||!rz)return null;const a=(ry.p[1]-r.p[1])/h,b=(rz.p[1]-r.p[1])/h,c=(ry.p[2]-r.p[2])/h,e=(rz.p[2]-r.p[2])/h,det=a*e-b*c;if(Math.abs(det)<1e-10)return null;y-=(e*ey-b*ez)/det;z-=(-c*ey+a*ez)/det;}return null;
 }
-function model(x,y,diam,power=60){const n=4/3,depth=200/9,radius=(n-1)*1000/power;return {x,y,diam,power,n,depth,radius,retinaRadius:12,retinaCenter:depth-12};}
+function model(x,y,diam,power=57){const n=4/3,depth=200/9,radius=(n-1)*1000/power;return {x,y,diam,power,n,depth,radius,retinaRadius:12,retinaCenter:depth-12};}
 function eyeRay(ray,eye){
  if(!ray||eye.x<ray.p[0]-1e-7)return null;
  let p=[ray.p[0]-eye.x,ray.p[1]-eye.y,ray.p[2]],d=ray.d;

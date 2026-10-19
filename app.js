@@ -1,9 +1,10 @@
 'use strict';
 const $=id=>document.getElementById(id),O=Optics;
-const specs=[['f','Objective nominal f',90,240,1,' mm'],['eye','Ocular focal parameter',20,65,1,' mm'],['diam','Diaphragm diameter',8,30,.5,' mm'],['field','Object field angle',0,3,.1,'°'],['defocus','Ocular defocus',-12,12,.5,' mm'],['stop','Diaphragm position',-100,90,1,' mm'],['n','Glass refractive index',1.45,1.7,.001,''],['eyeOffset','Eye axial offset',-40,60,1,' mm'],['eyeHeight','Eye lateral offset',-8,8,.25,' mm'],['eyeDiam','Eye aperture diameter',2,8,.25,' mm'],['eyePower','Eye focusing power',50,70,.5,' D']];
+const specs=[['f','Objective nominal f',90,240,1,' mm'],['eye','Ocular focal parameter',20,65,1,' mm'],['diam','Diaphragm diameter',8,30,.5,' mm'],['field','Object field angle',0,3,.1,'°'],['defocus','Ocular defocus',-12,12,.5,' mm'],['stop','Diaphragm position',-100,90,1,' mm'],['n','Glass refractive index',1.45,1.7,.001,''],['eyeOffset','Eye axial offset',-40,60,1,' mm'],['eyeHeight','Eye lateral offset',-8,8,.25,' mm'],['eyeDiam','Eye aperture diameter',2,8,.25,' mm']];
+const EYE_POWER=57;
 let state={},key='kepler',retinaCache={key:null,data:null};
 const fmt=(v,d=1)=>Number.isFinite(v)?v.toFixed(d):'∞';
-function reset(){state={...O.presets[key],n:1.517,defocus:0,stop:0,eyeOffset:0,eyeHeight:0,eyeDiam:4,eyePower:60};$('controls').innerHTML=specs.map(([id,label,min,max,step,unit])=>`<div class="control"><label for="${id}">${label}<output id="${id}Value"></output></label><input type="range" aria-label="${label}" id="${id}" min="${min}" max="${max}" step="${step}" value="${state[id]}"></div>`).join('');for(const [id]of specs)$(id).addEventListener('input',()=>{state[id]=+$(id).value;render();});render();}
+function reset(){state={...O.presets[key],n:1.517,defocus:0,stop:0,eyeOffset:0,eyeHeight:0,eyeDiam:4};$('controls').innerHTML=specs.map(([id,label,min,max,step,unit])=>`<div class="control"><label for="${id}">${label}<output id="${id}Value"></output></label><input type="range" aria-label="${label}" id="${id}" min="${min}" max="${max}" step="${step}" value="${state[id]}"></div>`).join('');for(const [id]of specs)$(id).addEventListener('input',()=>{state[id]=+$(id).value;render();});render();}
 $('system').onchange=()=>{key=$('system').value;reset();};$('reset').onclick=reset; $('alignEye').onclick=()=>{state.eyeOffset=0;state.eyeHeight=0;$('eyeOffset').value=0;$('eyeHeight').value=0;render();};$('retinaZoom').onchange=render;for(const id of ['bundles','extensions','showEye'])$(id).onchange=render;
 function render(){
  for(const [id,,, ,step,unit]of specs)$(id+'Value').textContent=fmt(state[id],step<.01?3:step<1?2:0)+unit;
@@ -38,7 +39,7 @@ function render(){
  // Exact stop-center probe rays, independent of field rays, show pupil conjugacy.
  if($('extensions').checked)for(const side of ['entrance','exit']){const dir=side==='entrance'?-1:1,p=side==='entrance'?en:ex,idx=sys.surfaces.indexOf(sys.stop),ss=dir<0?sys.surfaces.slice(0,idx).reverse():sys.surfaces.slice(sys.stop.stop?idx+1:idx);if(p&&Number.isFinite(p.x)&&p.x>=xmin&&p.x<=xmax)for(const t of [-.025,.025]){const r=O.trace(ss,[sys.stop.x,0],[dir*Math.cos(t),Math.sin(t)],false);if(r.ok){s+=path(r.points,'#168679',1,'3 4');const h=r.p[1]+(p.x-r.p[0])*r.d[1]/r.d[0];s+=line(r.p[0],r.p[1],p.x,h,'#168679',1,'3 4');}}}
  if(real&&ex.x>=xmin&&ex.x<=xmax){const y=258;s+=`<path d="M${X(sys.last)} ${y-4}v8m0 -4H${X(ex.x)}m0 -4v8" stroke="#168679" fill="none"/><text text-anchor="middle" x="${(X(sys.last)+X(ex.x))/2}" y="${y-10}">Eye relief ${fmt(a.relief)} mm</text>`;}
- if($('showEye').checked)s+=drawEyeModel(EyeOptics.model(eyeX,state.eyeHeight,state.eyeDiam,state.eyePower),X,Y,passed,true);
+ if($('showEye').checked)s+=drawEyeModel(EyeOptics.model(eyeX,state.eyeHeight,state.eyeDiam,EYE_POWER),X,Y,passed,true);
  if(sys.stop!==sys.diaphragm)s+=line(sys.diaphragm.x,sys.diaphragm.a,sys.diaphragm.x,yrange*.65,'#8391a0',3)+line(sys.diaphragm.x,-sys.diaphragm.a,sys.diaphragm.x,-yrange*.65,'#8391a0',3)+`<text text-anchor="middle" x="${X(sys.diaphragm.x)}" y="308">Diaphragm</text>`; 
  // Draw the exit pupil last, so neither field rays nor the coincident eye can hide it.
  if(ex&&Number.isFinite(ex.x)){
@@ -47,7 +48,7 @@ function render(){
  }else s+='<text x="650" y="298" class="pupil-label">Exit pupil at infinity / unavailable</text>';
  $('layout').innerHTML=s;
  renderEyePlacement(sys,ex,eyeX,passed,eyePass.length,real);
- renderRetina(sys,EyeOptics.model(eyeX,state.eyeHeight,state.eyeDiam,state.eyePower),a);
+ renderRetina(sys,EyeOptics.model(eyeX,state.eyeHeight,state.eyeDiam,EYE_POWER),a);
  $('lesson').innerHTML=`<p><b>Chief ray.</b> The orange ray starts at the selected field angle and is numerically aimed through the active stop center.</p><p><b>Entrance / exit pupils.</b> The green markers image the active aperture stop through the optics before / after it. The stop is automatically identified for an on-axis collimated beam; another lens rim can take over when the diaphragm moves.</p><p><b>Eye relief.</b> ${real?'Place the eye aperture at the real exit pupil to intercept bundles from different fields. Axial or lateral displacement can hide part of the field.':'The exit pupil is virtual or lies inside the instrument. The eye is shown 25 mm behind the last surface, plus your offset.'}</p>`;
  $('prescription').innerHTML='<table><tr><th>Element</th><th>Front x</th><th>R1 / R2</th><th>t</th><th>Clear Ø</th></tr>'+sys.ls.map(l=>`<tr><td>${l.name}</td><td>${fmt(l.x)}</td><td>${fmt(l.r)} / ${fmt(-l.r)}</td><td>${fmt(l.t)}</td><td>${fmt(l.a*2)}</td></tr>`).join('')+'</table>';
 }
@@ -66,8 +67,8 @@ function renderEyePlacement(sys,ex,eyeX,passed,accepted,real){
  e+=`<line x1="${X(rear)}" y1="55" x2="${X(rear)}" y2="197" stroke="#8cabc6" stroke-width="5"/><text x="${X(rear)}" y="43" text-anchor="middle" font-size="11" fill="#52657d">Last surface</text>`;
  if(!inside)for(const r of passed){const h=intercept(r),ok=Math.abs(h-state.eyeHeight)<=state.eyeDiam/2,color=ok?'#3075be':'#cc614e';e+=line(r.p[0],r.p[1],eyeX,h,color,r.target===0?2:1);if(!ok)e+=`<path d="M${X(eyeX)-3} ${Y(h)-3}l6 6m-6 0l6 -6" stroke="#cc614e" stroke-width="1.5"/>`;}
  if(finite){e+=`<line x1="${X(xp)}" y1="54" x2="${X(xp)}" y2="198" stroke="#168679" stroke-dasharray="4 4"/><text x="${X(xp)}" y="32" text-anchor="middle" font-size="12" font-weight="650" fill="#168679">Exit pupil${ex.virtual?' (virtual)':''}</text>`;e+=line(xp,-ex.diam/2,xp,ex.diam/2,'white',7)+line(xp,-ex.diam/2,xp,ex.diam/2,'#168679',3,ex.virtual?'4 3':'');for(const h of [-ex.diam/2,ex.diam/2])e+=`<path d="M${X(xp)-5} ${Y(h)}h10" stroke="#168679" stroke-width="2"/>`;}
- e+=drawEyeModel(EyeOptics.model(eyeX,state.eyeHeight,state.eyeDiam,state.eyePower),X,Y,inside?[]:passed,true);
- e+=`<text x="${X(eyeX+11)}" y="214" text-anchor="middle" font-size="11" fill="#7560a9">Moving reduced eye · ${fmt(state.eyePower,0)} D</text>`;
+ e+=drawEyeModel(EyeOptics.model(eyeX,state.eyeHeight,state.eyeDiam,EYE_POWER),X,Y,inside?[]:passed,true);
+ e+=`<text x="${X(eyeX+11)}" y="214" text-anchor="middle" font-size="11" fill="#7560a9">Moving reduced eye · ${fmt(EYE_POWER,0)} D</text>`;
  e+=`<text x="12" y="239" font-size="11" fill="#63758d">${real?'Exit pupil Ø '+fmt(ex.diam,2)+' mm':'Virtual / inaccessible pupil'} · axes magnified independently</text>`;
  $('eyeView').innerHTML=e;
  $('eyeCapture').textContent=inside?'Eye is inside the instrument — move it behind the last surface.':accepted+' of '+passed.length+' sampled rays enter the eye opening';

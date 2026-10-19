@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),O=require('./optics.js'),E=require('./eye.js');
 const near=(a,b,t=1e-6)=>assert.ok(Math.abs(a-b)<t,`${a} != ${b}`);
 // Independent paraxial single-surface focus nR/(n-1), and exact retinal sphere intersection.
-const eye=E.model(0,0,4),ray={p:[-1,.0001,0],d:[1,0,0]},h=E.eyeRay(ray,eye);
+const eye=E.model(0,0,4,60),ray={p:[-1,.0001,0],d:[1,0,0]},h=E.eyeRay(ray,eye);
 near(h.local[0],eye.depth);near(h.local[1],0,1e-8);near(eye.depth,eye.n*eye.radius/(eye.n-1));
 assert.equal(E.eyeRay({p:[-1,3,0],d:[1,0,0]},eye),null);
 const shifted=E.model(0,8,4);assert.equal(E.eyeRay(ray,shifted),null);
