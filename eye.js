@@ -15,14 +15,21 @@ function fieldRay(sys,ay,az,ty,tz){
  const start=Math.min(0,sys.diaphragm.x)-Math.max(35,sys.p.f*.2),d=unit([1,Math.tan(ay),Math.tan(az)]),ss=sys.surfaces.filter(s=>s.x<=sys.stop.x);let y=ty-(sys.stop.x-start)*d[1]/d[0],z=tz-(sys.stop.x-start)*d[2]/d[0];
  for(let i=0;i<12;i++){const r=trace(ss,[start,y,z],d,false);if(!r)return null;const ey=r.p[1]-ty,ez=r.p[2]-tz;if(Math.hypot(ey,ez)<1e-7)return trace(sys.surfaces,[start,y,z],d);const h=1e-4,ry=trace(ss,[start,y+h,z],d,false),rz=trace(ss,[start,y,z+h],d,false);if(!ry||!rz)return null;const a=(ry.p[1]-r.p[1])/h,b=(rz.p[1]-r.p[1])/h,c=(ry.p[2]-r.p[2])/h,e=(rz.p[2]-r.p[2])/h,det=a*e-b*c;if(Math.abs(det)<1e-10)return null;y-=(e*ey-b*ez)/det;z-=(-c*ey+a*ez)/det;}return null;
 }
-function model(x,y,diam,power=57){const n=4/3,depth=200/9,radius=(n-1)*1000/power;return {x,y,diam,power,n,depth,radius,retinaRadius:12,retinaCenter:depth-12};}
-function eyeRay(ray,eye){
+function model(entranceX,y,diam,power=57){
+ const n=4/3,depth=200/9,radius=(n-1)*1000/power,pupilDepth=3;
+ // Gaussian image of the internal iris through the equivalent front refractor.
+ const entranceDepth=pupilDepth/(n-pupilDepth*power/1000),entranceMagnification=n/(n-pupilDepth*power/1000),x=entranceX-entranceDepth;
+ return {x,y,diam,power,n,depth,radius,pupilDepth,pupilX:x+pupilDepth,entranceX,entranceDepth,entranceDiam:diam*entranceMagnification,retinaRadius:12,retinaCenter:depth-12};
+}
+function eyeRay(ray,eye,includeBlocked=false){
  if(!ray||eye.x<ray.p[0]-1e-7)return null;
  let p=[ray.p[0]-eye.x,ray.p[1]-eye.y,ray.p[2]],d=ray.d;
- const t=-p[0]/d[0];if(t<0)return null;const aperture=add(p,d,t);if(Math.hypot(aperture[1],aperture[2])>eye.diam/2+1e-8)return null;
+ const t=-p[0]/d[0];if(t<0)return null;const entry=add(p,d,t);
  const s={x:0,r:eye.radius,a:4.5,n1:1,n2:eye.n},q=intersection(s,p,d);if(!q||Math.hypot(q[1],q[2])>4.5)return null;d=refract(s,q,d);if(!d)return null;
+ const pupilT=(eye.pupilDepth-q[0])/d[0];if(pupilT<0)return null;const aperture=add(q,d,pupilT);
+ if(Math.hypot(aperture[1],aperture[2])>eye.diam/2+1e-8)return includeBlocked?{entry:[eye.x,entry[1]+eye.y,entry[2]],cornea:[q[0]+eye.x,q[1]+eye.y,q[2]],aperture:[eye.pupilX,aperture[1]+eye.y,aperture[2]],blocked:true}:null;
  const v=[q[0]-eye.retinaCenter,q[1],q[2]],b=dot(v,d),disc=b*b-dot(v,v)+144;if(disc<0)return null;const ts=[-b-Math.sqrt(disc),-b+Math.sqrt(disc)],hits=ts.filter(t=>t>0).map(t=>add(q,d,t)).filter(p=>p[0]>=eye.retinaCenter);if(!hits.length)return null;
- return {aperture:[eye.x,aperture[1]+eye.y,aperture[2]],cornea:[q[0]+eye.x,q[1]+eye.y,q[2]],retina:[hits[0][0]+eye.x,hits[0][1]+eye.y,hits[0][2]],local:hits[0],d};
+ return {entry:[eye.x,entry[1]+eye.y,entry[2]],aperture:[eye.pupilX,aperture[1]+eye.y,aperture[2]],cornea:[q[0]+eye.x,q[1]+eye.y,q[2]],retina:[hits[0][0]+eye.x,hits[0][1]+eye.y,hits[0][2]],local:hits[0],d};
 }
 function targetRays(sys){
  const samples=[],step=.07*Math.PI/180,N=37;let launched=0;
